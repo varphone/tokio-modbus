@@ -31,6 +31,10 @@ env_logger = "0.7"
 futures = "0.3"
 tokio = { version = "0.2", features = ["tcp", "macros"] }
 
+[patch.crates-io.tokio-serial]
+git = "https://github.com/slowtec/tokio-serial"
+branch = "derive-debug"
+
 [features]
 default = ["tcp", "rtu", "sync"]
 rtu = ["tokio-serial", "futures-util/sink"]

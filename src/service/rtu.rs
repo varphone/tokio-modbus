@@ -7,6 +7,7 @@ use crate::{
 
 use futures_util::{future, sink::SinkExt, stream::StreamExt};
 use std::{
+    fmt,
     future::Future,
     io::{Error, ErrorKind},
     pin::Pin,
@@ -19,7 +20,7 @@ pub(crate) fn connect_slave<T>(
     slave: Slave,
 ) -> impl Future<Output = Result<Context<T>, Error>>
 where
-    T: AsyncRead + AsyncWrite + Unpin + 'static,
+    T: AsyncRead + AsyncWrite + Unpin + fmt::Debug + 'static,
 {
     let framed = Framed::new(transport, codec::rtu::ClientCodec::default());
 
@@ -31,6 +32,7 @@ where
 }
 
 /// Modbus RTU client
+#[derive(Debug)]
 pub(crate) struct Context<T: AsyncRead + AsyncWrite + Unpin + 'static> {
     service: Framed<T, codec::rtu::ClientCodec>,
     slave_id: SlaveId,

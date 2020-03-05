@@ -12,13 +12,14 @@ pub mod util;
 use crate::{frame::*, slave::*};
 
 use std::{
+    fmt,
     future::Future,
     io::{Error, ErrorKind},
     pin::Pin,
 };
 
 /// A transport independent asynchronous client trait.
-pub trait Client: SlaveContext + Send {
+pub trait Client: SlaveContext + Send + fmt::Debug {
     fn call<'a>(
         &'a mut self,
         request: Request,
@@ -88,6 +89,7 @@ pub trait Writer: Client {
 }
 
 /// An asynchronous Modbus client context.
+#[derive(Debug)]
 pub struct Context {
     client: Box<dyn Client>,
 }
