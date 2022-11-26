@@ -47,6 +47,7 @@ impl Server {
 
         loop {
             let (stream, _) = listener.accept().await?;
+            stream.set_nodelay(true).unwrap();
             let framed = Framed::new(stream, codec::tcp::ServerCodec::default());
             let new_service = service.clone();
 
