@@ -189,7 +189,8 @@ pub fn listener(addr: SocketAddr, workers: usize) -> io::Result<TcpListener> {
         SocketAddr::V6(_) => Socket::new(Domain::IPV6, Type::STREAM, None)?,
     };
     configure_tcp(workers, &listener)?;
-    listener.reuse_address()?;
+    listener.set_nonblocking(true)?;
+    listener.set_reuse_address(true)?;
     listener.bind(&addr.into())?;
     listener.listen(1024)?;
     TcpListener::from_std(listener.into())
@@ -199,7 +200,7 @@ pub fn listener(addr: SocketAddr, workers: usize) -> io::Result<TcpListener> {
 #[allow(unused)]
 fn configure_tcp(workers: usize, tcp: &Socket) -> io::Result<()> {
     if workers > 1 {
-        tcp.reuse_port()?;
+        tcp.set_reuse_port(true)?;
     }
     Ok(())
 }
