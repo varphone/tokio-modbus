@@ -18,15 +18,15 @@ const HEADER_LEN: usize = 7;
 const PROTOCOL_ID: u16 = 0x0000; // TCP
 
 #[derive(Debug, Default)]
-pub(crate) struct AduDecoder;
+pub struct AduDecoder;
 
 #[derive(Debug)]
-pub(crate) struct ClientCodec {
-    pub(crate) decoder: AduDecoder,
+pub struct ClientCodec {
+    pub decoder: AduDecoder,
 }
 
 impl ClientCodec {
-    pub(crate) const fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             decoder: AduDecoder,
         }
@@ -35,8 +35,8 @@ impl ClientCodec {
 
 #[cfg(feature = "tcp-server")]
 #[derive(Debug, Default)]
-pub(crate) struct ServerCodec {
-    pub(crate) decoder: AduDecoder,
+pub struct ServerCodec {
+    pub decoder: AduDecoder,
 }
 
 impl Decoder for AduDecoder {

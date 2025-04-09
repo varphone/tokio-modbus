@@ -39,12 +39,12 @@ pub mod client;
 pub mod slave;
 pub use self::slave::{Slave, SlaveId};
 
-mod codec;
+pub mod codec;
 
-mod error;
+pub mod error;
 pub use self::error::{Error, ProtocolError};
 
-mod frame;
+pub mod frame;
 #[cfg(feature = "server")]
 pub use self::frame::SlaveRequest;
 pub use self::frame::{
@@ -61,7 +61,7 @@ pub use self::frame::{
 /// 2. [`ExceptionCode`]: An error occurred on the _Modbus_ server.
 pub type Result<T> = std::result::Result<std::result::Result<T, ExceptionCode>, Error>;
 
-mod service;
+pub mod service;
 
 #[cfg(feature = "server")]
 pub mod server;

@@ -43,7 +43,7 @@ impl TransactionIdGenerator {
 
 /// Modbus TCP client
 #[derive(Debug)]
-pub(crate) struct Client<T> {
+pub struct Client<T> {
     framed: Option<Framed<T, codec::tcp::ClientCodec>>,
     transaction_id_generator: TransactionIdGenerator,
     unit_id: UnitId,
@@ -53,7 +53,7 @@ impl<T> Client<T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    pub(crate) fn new(transport: T, slave: Slave) -> Self {
+    pub fn new(transport: T, slave: Slave) -> Self {
         let framed = Framed::new(transport, codec::tcp::ClientCodec::new());
         let transaction_id_generator = TransactionIdGenerator::new();
         let unit_id: UnitId = slave.into();
@@ -89,7 +89,7 @@ where
         Ok(framed)
     }
 
-    pub(crate) async fn call(&mut self, req: Request<'_>) -> Result<Response> {
+    pub async fn call(&mut self, req: Request<'_>) -> Result<Response> {
         log::debug!("Call {:?}", req);
 
         let req_function_code = req.function_code();

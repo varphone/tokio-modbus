@@ -18,7 +18,7 @@ use super::{disconnect, verify_response_header};
 
 /// Modbus RTU client
 #[derive(Debug)]
-pub(crate) struct Client<T> {
+pub struct Client<T> {
     framed: Option<Framed<T, codec::rtu::ClientCodec>>,
     slave_id: SlaveId,
 }
@@ -27,7 +27,7 @@ impl<T> Client<T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    pub(crate) fn new(transport: T, slave: Slave) -> Self {
+    pub fn new(transport: T, slave: Slave) -> Self {
         let framed = Framed::new(transport, codec::rtu::ClientCodec::default());
         let slave_id = slave.into();
         Self {

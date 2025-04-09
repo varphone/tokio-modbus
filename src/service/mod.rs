@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 #[cfg(feature = "rtu")]
-pub(crate) mod rtu;
+pub mod rtu;
 
 #[cfg(feature = "tcp")]
-pub(crate) mod tcp;
+pub mod tcp;
 
 #[cfg(any(feature = "rtu", feature = "tcp"))]
 async fn disconnect<T, C>(framed: tokio_util::codec::Framed<T, C>) -> std::io::Result<()>
