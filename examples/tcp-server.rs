@@ -6,15 +6,11 @@
 //! This example shows how to start a server and implement basic register
 //! read/write operations.
 
-use std::{
-    collections::HashMap,
-    future,
-    net::SocketAddr,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::pin::Pin;
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 
 use tokio_modbus::{
     prelude::*,
@@ -30,34 +26,41 @@ impl tokio_modbus::server::Service for ExampleService {
     type Request = Request<'static>;
     type Response = Response;
     type Exception = ExceptionCode;
-    type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+    type Future<'a> =
+        Pin<Box<dyn futures::Future<Output = Result<Self::Response, Self::Exception>> + Send + 'a>>;
 
-    fn call(&self, req: Self::Request) -> Self::Future {
-        let res = match req {
-            Request::ReadInputRegisters(addr, cnt) => {
-                register_read(&self.input_registers.lock().unwrap(), addr, cnt)
-                    .map(Response::ReadInputRegisters)
-            }
-            Request::ReadHoldingRegisters(addr, cnt) => {
-                register_read(&self.holding_registers.lock().unwrap(), addr, cnt)
-                    .map(Response::ReadHoldingRegisters)
-            }
-            Request::WriteMultipleRegisters(addr, values) => {
-                register_write(&mut self.holding_registers.lock().unwrap(), addr, &values)
-                    .map(|_| Response::WriteMultipleRegisters(addr, values.len() as u16))
-            }
-            Request::WriteSingleRegister(addr, value) => register_write(
-                &mut self.holding_registers.lock().unwrap(),
-                addr,
-                std::slice::from_ref(&value),
-            )
-            .map(|_| Response::WriteSingleRegister(addr, value)),
-            _ => {
-                println!("SERVER: Exception::IllegalFunction - Unimplemented function code in request: {req:?}");
-                Err(ExceptionCode::IllegalFunction)
+    fn call(&self, req: Self::Request) -> Self::Future<'_> {
+        let res = async move {
+            match req {
+                Request::ReadInputRegisters(addr, cnt) => {
+                    register_read(&*self.input_registers.lock().await, addr, cnt)
+                        .await
+                        .map(Response::ReadInputRegisters)
+                }
+                Request::ReadHoldingRegisters(addr, cnt) => {
+                    register_read(&*self.holding_registers.lock().await, addr, cnt)
+                        .await
+                        .map(Response::ReadHoldingRegisters)
+                }
+                Request::WriteMultipleRegisters(addr, values) => {
+                    register_write(&mut *self.holding_registers.lock().await, addr, &values)
+                        .await
+                        .map(|_| Response::WriteMultipleRegisters(addr, values.len() as u16))
+                }
+                Request::WriteSingleRegister(addr, value) => register_write(
+                    &mut *self.holding_registers.lock().await,
+                    addr,
+                    std::slice::from_ref(&value),
+                )
+                .await
+                .map(|_| Response::WriteSingleRegister(addr, value)),
+                _ => {
+                    println!("SERVER: Exception::IllegalFunction - Unimplemented function code in request: {req:?}");
+                    Err(ExceptionCode::IllegalFunction)
+                }
             }
         };
-        future::ready(res)
+        Box::pin(res)
     }
 }
 
@@ -80,7 +83,7 @@ impl ExampleService {
 }
 
 /// Helper function implementing reading registers from a HashMap.
-fn register_read(
+async fn register_read(
     registers: &HashMap<u16, u16>,
     addr: u16,
     cnt: u16,
@@ -101,7 +104,7 @@ fn register_read(
 
 /// Write a holding register. Used by both the write single register
 /// and write multiple registers requests.
-fn register_write(
+async fn register_write(
     registers: &mut HashMap<u16, u16>,
     addr: u16,
     values: &[u16],
