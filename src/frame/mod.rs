@@ -476,6 +476,7 @@ impl ExceptionCode {
         }
     }
 
+    #[must_use]
     pub fn description(&self) -> &str {
         use crate::frame::ExceptionCode::*;
 

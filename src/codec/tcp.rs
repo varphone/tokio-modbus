@@ -26,10 +26,17 @@ pub struct ClientCodec {
 }
 
 impl ClientCodec {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             decoder: AduDecoder,
         }
+    }
+}
+
+impl Default for ClientCodec {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

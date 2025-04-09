@@ -82,6 +82,8 @@ impl FrameDecoder {
         Ok(Some((slave_id, pdu_data)))
     }
 
+    /// # Panics
+    /// Panics if the buffer is empty.
     pub fn recover_on_error(&mut self, buf: &mut BytesMut) {
         // If decoding failed the buffer cannot be empty
         debug_assert!(!buf.is_empty());
