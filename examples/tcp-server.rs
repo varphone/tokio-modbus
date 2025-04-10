@@ -138,14 +138,22 @@ async fn server_context(socket_addr: SocketAddr) -> anyhow::Result<()> {
     println!("Starting up server on {socket_addr}");
     let listener = TcpListener::bind(socket_addr).await?;
     let server = Server::new(listener);
-    let new_service = |_socket_addr| Ok(Some(ExampleService::new()));
+    let new_service = |socket_addr| {
+        println!("SERVER: New connection from {socket_addr}");
+        Ok(Some(ExampleService::new()))
+    };
     let on_connected = |stream, socket_addr| async move {
         accept_tcp_connection(stream, socket_addr, new_service)
+    };
+    let on_disconnected = |socket_addr| {
+        println!("SERVER: Disconnected from {socket_addr}");
     };
     let on_process_error = |err| {
         eprintln!("{err}");
     };
-    server.serve(&on_connected, on_process_error).await?;
+    server
+        .serve(&on_connected, on_disconnected, on_process_error)
+        .await?;
     Ok(())
 }
 

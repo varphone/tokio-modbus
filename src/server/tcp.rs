@@ -66,9 +66,10 @@ impl Server {
     /// with `Err` then listening stops and [`Self::serve()`] returns with an error.
     /// If `OnConnected` returns `Ok(None)` then the connection is rejected
     /// but [`Self::serve()`] continues listening for new connections.
-    pub async fn serve<S, T, F, OnConnected, OnProcessError>(
+    pub async fn serve<S, T, F, OnConnected, OnDisconnected, OnProcessError>(
         &self,
         on_connected: &OnConnected,
+        on_disconnected: OnDisconnected,
         on_process_error: OnProcessError,
     ) -> io::Result<()>
     where
@@ -76,6 +77,7 @@ impl Server {
         S::Request: From<RequestAdu<'static>> + Send,
         T: AsyncRead + AsyncWrite + Unpin + Send + 'static,
         OnConnected: Fn(TcpStream, SocketAddr) -> F,
+        OnDisconnected: FnOnce(SocketAddr) + Clone + Send + 'static,
         F: Future<Output = io::Result<Option<(S, T)>>>,
         OnProcessError: FnOnce(io::Error) + Clone + Send + 'static,
     {
@@ -87,6 +89,7 @@ impl Server {
                 log::debug!("No service for connection from {socket_addr}");
                 continue;
             };
+            let on_disconnected = on_disconnected.clone();
             let on_process_error = on_process_error.clone();
 
             let framed = Framed::new(transport, ServerCodec::default());
@@ -96,6 +99,7 @@ impl Server {
                 if let Err(err) = process(framed, service).await {
                     on_process_error(err);
                 }
+                on_disconnected(socket_addr);
             });
         }
     }
@@ -104,9 +108,10 @@ impl Server {
     ///
     /// Warning: Request processing is not scoped and could be aborted at any internal await point!
     /// See also: <https://rust-lang.github.io/wg-async/vision/roadmap/scopes.html#cancellation>
-    pub async fn serve_until<S, T, F, X, OnConnected, OnProcessError>(
+    pub async fn serve_until<S, T, F, X, OnConnected, OnDisconnected, OnProcessError>(
         self,
         on_connected: &OnConnected,
+        on_disconnected: OnDisconnected,
         on_process_error: OnProcessError,
         abort_signal: X,
     ) -> io::Result<Terminated>
@@ -116,12 +121,13 @@ impl Server {
         T: AsyncRead + AsyncWrite + Unpin + Send + 'static,
         X: Future<Output = ()> + Sync + Send + Unpin + 'static,
         OnConnected: Fn(TcpStream, SocketAddr) -> F,
+        OnDisconnected: FnOnce(SocketAddr) + Clone + Send + 'static,
         F: Future<Output = io::Result<Option<(S, T)>>>,
         OnProcessError: FnOnce(io::Error) + Clone + Send + 'static,
     {
         let abort_signal = abort_signal.fuse();
         tokio::select! {
-            res = self.serve(on_connected, on_process_error) => {
+            res = self.serve(on_connected, on_disconnected, on_process_error) => {
                 res.map(|()| Terminated::Finished)
             },
             () = abort_signal => {
