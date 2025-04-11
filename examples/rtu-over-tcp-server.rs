@@ -30,9 +30,9 @@ impl tokio_modbus::server::Service for ExampleService {
     type Request = SlaveRequest<'static>;
     type Response = Response;
     type Exception = ExceptionCode;
-    type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+    type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-    fn call(&self, req: Self::Request) -> Self::Future {
+    fn call(&self, req: Self::Request) -> Self::Future<'_> {
         println!("{}", req.slave);
         let res = match req.request {
             Request::ReadInputRegisters(addr, cnt) => {

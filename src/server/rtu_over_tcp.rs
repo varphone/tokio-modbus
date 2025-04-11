@@ -232,9 +232,9 @@ mod tests {
             type Request = Request<'static>;
             type Response = Response;
             type Exception = ExceptionCode;
-            type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+            type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-            fn call(&self, _: Self::Request) -> Self::Future {
+            fn call(&self, _: Self::Request) -> Self::Future<'_> {
                 future::ready(Ok(self.response.clone()))
             }
         }
@@ -267,9 +267,9 @@ mod tests {
             type Request = Request<'static>;
             type Response = Response;
             type Exception = ExceptionCode;
-            type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+            type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-            fn call(&self, _: Self::Request) -> Self::Future {
+            fn call(&self, _: Self::Request) -> Self::Future<'_> {
                 future::ready(Ok(self.response.clone()))
             }
         }

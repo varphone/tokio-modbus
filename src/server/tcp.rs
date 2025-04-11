@@ -236,9 +236,9 @@ mod tests {
             type Request = Request<'static>;
             type Response = Response;
             type Exception = ExceptionCode;
-            type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+            type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-            fn call(&self, _: Self::Request) -> Self::Future {
+            fn call(&self, _: Self::Request) -> Self::Future<'_> {
                 future::ready(Ok(self.response.clone()))
             }
         }
@@ -257,7 +257,7 @@ mod tests {
 
         // passes type-check is the goal here
         // added `mem::drop` to satisfy `must_use` compiler warnings
-        std::mem::drop(server.serve(&on_connected, |_err| {}));
+        std::mem::drop(server.serve(&on_connected, |_| {}, |_err| {}));
     }
 
     #[tokio::test]
@@ -271,9 +271,9 @@ mod tests {
             type Request = Request<'static>;
             type Response = Response;
             type Exception = ExceptionCode;
-            type Future = future::Ready<Result<Self::Response, ExceptionCode>>;
+            type Future<'a> = future::Ready<Result<Self::Response, ExceptionCode>>;
 
-            fn call(&self, _: Self::Request) -> Self::Future {
+            fn call(&self, _: Self::Request) -> Self::Future<'_> {
                 future::ready(Ok(self.response.clone()))
             }
         }

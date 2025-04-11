@@ -37,9 +37,9 @@ impl Service for TestService {
 
     type Exception = ExceptionCode;
 
-    type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+    type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-    fn call(&self, req: Self::Request) -> Self::Future {
+    fn call(&self, req: Self::Request) -> Self::Future<'_> {
         future::ready(self.handle(req))
     }
 }

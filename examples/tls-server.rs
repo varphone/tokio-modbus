@@ -92,9 +92,9 @@ impl tokio_modbus::server::Service for ExampleService {
     type Request = Request<'static>;
     type Response = Response;
     type Exception = ExceptionCode;
-    type Future = future::Ready<Result<Self::Response, Self::Exception>>;
+    type Future<'a> = future::Ready<Result<Self::Response, Self::Exception>>;
 
-    fn call(&self, req: Self::Request) -> Self::Future {
+    fn call(&self, req: Self::Request) -> Self::Future<'_> {
         let res = match req {
             Request::ReadInputRegisters(addr, cnt) => {
                 register_read(&self.input_registers.lock().unwrap(), addr, cnt)
@@ -216,10 +216,13 @@ async fn server_context(socket_addr: SocketAddr) -> anyhow::Result<()> {
             Err(_) => Ok(None),
         }
     };
+    let on_disconnected = |_socket_addr| {};
     let on_process_error = |err| {
         eprintln!("{err}");
     };
-    server.serve(&on_connected, on_process_error).await?;
+    server
+        .serve(&on_connected, on_disconnected, on_process_error)
+        .await?;
     Ok(())
 }
 
